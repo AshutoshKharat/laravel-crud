@@ -162,7 +162,7 @@
                 <!-- Checkbox -->
                 <div class="mb-3 form-check">
                     <input type="checkbox" class="form-check-input @error('terms') is-invalid @enderror" id="terms"
-                        name="terms" {{ old('terms') ? 'checked' : '' }}>
+                        name="terms" {{ old('terms') ? 'checked' : '' }} required>
                     <label for="terms" class="form-check-label">I agree to the terms and conditions</label>
                     @error('terms')
                         <div class="invalid-feedback">{{ $message }}</div>
@@ -203,7 +203,7 @@
                 <div class="mb-3 file-upload">
                     <label for="file" class="form-label">Upload File</label>
                     <input type="file" class="form-control @error('file') is-invalid @enderror" id="file"
-                        name="file">
+                        name="file" required>
                     @error('file')
                         <div class="invalid-feedback">{{ $message }}</div>
                     @enderror
@@ -218,6 +218,7 @@
 
     <!-- Bootstrap JS and jQuery -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.5/jquery.validate.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
 
     <!-- Custom JS for dynamic dropdowns and AJAX form submission -->
@@ -265,38 +266,59 @@
             });
 
             // Handle form submission via AJAX
-            $('#formData').submit(function(event) {
-                event.preventDefault();
-
-                let formData = new FormData(this);
-
-                $.ajax({
-                    url: '{{ route('forms.store') }}',
-                    method: 'POST',
-                    data: formData,
-                    processData: false,
-                    contentType: false,
-                    success: function(response) {
-                        $('#responseMessage').html(
-                            '<div class="alert alert-success">Form submitted successfully!</div>'
-                        );
-                        $('#formData')[0].reset(); // Clear form
-                        $('#state').empty().append('<option value="">Select State</option>');
-                        $('#city').empty().append('<option value="">Select City</option>');
-                        setTimeout(function() {
-                            window.location.href = '/';
-                        }, 2000);
+            $('#formData').validate({
+                rules: {
+                    name: "required",
+                    email: {
+                        required: true,
+                        email: true
                     },
-                    error: function(xhr) {
-                        let errors = xhr.responseJSON.errors;
-                        let errorHtml = '<div class="alert alert-danger">';
-                        $.each(errors, function(key, value) {
-                            errorHtml += '<p>' + value[0] + '</p>';
-                        });
-                        errorHtml += '</div>';
-                        $('#responseMessage').html(errorHtml);
-                    }
-                });
+                    country: "required",
+                    state: "required",
+                    city: "required",
+                    fileUpload: "required"
+                },
+                messages: {
+                    name: "Please enter your name",
+                    email: "Please enter a valid email address",
+                    country: "Please select a country",
+                    state: "Please select a state",
+                    city: "Please select a city",
+                    fileUpload: "Please upload a file"
+                },
+                submitHandler: function(form) {
+                    let formData = new FormData(form);
+
+                    $.ajax({
+                        url: '{{ route('forms.store') }}',
+                        method: 'POST',
+                        data: formData,
+                        processData: false,
+                        contentType: false,
+                        success: function(response) {
+                            $('#responseMessage').html(
+                                '<div class="alert alert-success">Form submitted successfully!</div>'
+                            );
+                            $('#formData')[0].reset(); // Clear form
+                            $('#state').empty().append(
+                                '<option value="">Select State</option>');
+                            $('#city').empty().append(
+                                '<option value="">Select City</option>');
+                            setTimeout(function() {
+                                window.location.href = '/';
+                            }, 2000);
+                        },
+                        error: function(xhr) {
+                            let errors = xhr.responseJSON.errors;
+                            let errorHtml = '<div class="alert alert-danger">';
+                            $.each(errors, function(key, value) {
+                                errorHtml += '<p>' + value[0] + '</p>';
+                            });
+                            errorHtml += '</div>';
+                            $('#responseMessage').html(errorHtml);
+                        }
+                    });
+                }
             });
         });
     </script>
